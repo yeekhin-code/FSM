@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fire Safety Inspector - Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            padding-bottom: 80px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .back-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .task-list {
+            padding: 16px;
+        }
+
+        .task-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .task-card:active {
+            transform: scale(0.98);
+        }
+
+        .task-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .task-due {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .task-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .task-location {
+            font-size: 14px;
+            color: #374151;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .detail-section {
+            background: white;
+            margin: 16px;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .map-container {
+            height: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: start;
+            gap: 12px;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            background: white;
+        }
+
+        .checkbox.checked {
+            background: #10b981;
+            border-color: #10b981;
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            color: white;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+        }
+
+        .checklist-text {
+            flex: 1;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .notes-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .photo-upload-btn {
+            width: 100%;
+            padding: 16px;
+            background: #f9fafb;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            color: #6b7280;
+            font-size: 14px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .photo-upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .photo-slot {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            background: #f9fafb;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .photo-slot.has-image {
+            border-style: solid;
+            border-color: #10b981;
+            background: white;
+        }
+
+        .photo-slot-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .photo-slot.has-image .photo-slot-preview {
+            display: block;
+        }
+
+        .photo-slot-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 40px 20px;
+        }
+
+        .photo-slot.has-image .photo-slot-placeholder {
+            display: none;
+        }
+
+        .photo-slot-icon {
+            width: 48px;
+            height: 48px;
+            background: #e5e7eb;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .photo-slot-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .photo-slot-sublabel {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .photo-slot-delete {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-slot.has-image .photo-slot-delete {
+            display: flex;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .photo-preview {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+        }
+
+        .photo-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .photo-modal.active {
+            display: flex;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .signature-pad {
+            width: 100%;
+            height: 200px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            background: white;
+            cursor: crosshair;
+        }
+
+        .signature-controls {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .submit-btn {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            padding: 16px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            cursor: pointer;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+
+        .info-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .info-value {
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .issues-section {
+            margin-top: 16px;
+            padding: 12px;
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            border-radius: 6px;
+        }
+
+        .issue-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .issue-item {
+            font-size: 13px;
+            color: #78350f;
+            padding: 6px 0;
+            display: flex;
+            gap: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="taskListPage" class="page active">
+        <div class="header">
+            <div class="header-title">🔥 My Inspections</div>
+            <div class="header-subtitle">Officer Rebecca Tan</div>
+        </div>
+
+        <div class="task-list">
+            <div class="task-card" onclick="openTask(0)">
+                <div class="task-card-header">
+                    <div>
+                        <div class="task-title">Pinewood Commercial Plaza</div>
+                        <div class="task-due">Due: Dec 15, 2025</div>
+                    </div>
+                    <span class="task-badge">Urgent</span>
+                </div>
+                <div class="task-location">📍 245 Forest Avenue</div>
+            </div>
+
+            <div class="task-card" onclick="openTask(1)">
+                <div class="task-card-header">
+                    <div>
+                        <div class="task-title">Willow Creek Elementary</div>
+                        <div class="task-due">Due: Dec 18, 2025</div>
+                    </div>
+                    <span class="task-badge">Review</span>
+                </div>
+                <div class="task-location">📍 890 Education Boulevard</div>
+            </div>
+
+            <div class="task-card" onclick="openTask(2)">
+                <div class="task-card-header">
+                    <div>
+                        <div class="task-title">Cedar Lake Restaurant</div>
+                        <div class="task-due">Due: Dec 20, 2025</div>
+                    </div>
+                    <span class="task-badge">Investigation</span>
+                </div>
+                <div class="task-location">📍 567 Lakeshore Drive</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="taskDetailPage" class="page">
+        <div class="header">
+            <button class="back-button" onclick="backToList()">← Back</button>
+            <div class="header-title" id="detailTitle">Inspection Details</div>
+            <div class="header-subtitle" id="detailSubtitle"></div>
+        </div>
+
+        <div class="detail-section">
+            <div class="section-title">Property Information</div>
+            <div class="info-row">
+                <span class="info-label">Application ID</span>
+                <span class="info-value" id="detailAppId">APP-2025-001</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Property Type</span>
+                <span class="info-value" id="detailType">Commercial</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Applicant</span>
+                <span class="info-value" id="detailApplicant">Harrison Properties LLC</span>
+            </div>
+
+            <div id="issuesSection"></div>
+
+            <div class="map-container">
+                <iframe width="100%" height="100%" frameborder="0" style="border:0"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=-122.44%2C37.76%2C-122.42%2C37.78&layer=mapnik&marker=37.77%2C-122.43"
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+
+        <div class="detail-section">
+            <div class="section-title">Enforcement Checklist</div>
+            <div id="checklistContainer"></div>
+        </div>
+
+        <div class="detail-section">
+            <div class="section-title">Inspector Notes</div>
+            <textarea class="notes-input" id="inspectorNotes"
+                placeholder="Enter your inspection notes here..."></textarea>
+        </div>
+
+        <div class="detail-section">
+            <div class="section-title">Photo Documentation</div>
+            <div class="photo-upload-container">
+                <div class="photo-slot" id="photoSlot1" onclick="openPhotoUpload(0)">
+                    <img class="photo-slot-preview" id="photoPreview1">
+                    <div class="photo-slot-placeholder">
+                        <div class="photo-slot-icon">📷</div>
+                        <div class="photo-slot-label">Front View</div>
+                        <div class="photo-slot-sublabel">Tap to upload photo</div>
+                    </div>
+                    <button class="photo-slot-delete" onclick="deletePhoto(0, event)">×</button>
+                </div>
+
+                <div class="photo-slot" id="photoSlot2" onclick="openPhotoUpload(1)">
+                    <img class="photo-slot-preview" id="photoPreview2">
+                    <div class="photo-slot-placeholder">
+                        <div class="photo-slot-icon">📷</div>
+                        <div class="photo-slot-label">Side View</div>
+                        <div class="photo-slot-sublabel">Tap to upload photo</div>
+                    </div>
+                    <button class="photo-slot-delete" onclick="deletePhoto(1, event)">×</button>
+                </div>
+
+                <div class="photo-slot" id="photoSlot3" onclick="openPhotoUpload(2)">
+                    <img class="photo-slot-preview" id="photoPreview3">
+                    <div class="photo-slot-placeholder">
+                        <div class="photo-slot-icon">📷</div>
+                        <div class="photo-slot-label">Detail View</div>
+                        <div class="photo-slot-sublabel">Tap to upload photo</div>
+                    </div>
+                    <button class="photo-slot-delete" onclick="deletePhoto(2, event)">×</button>
+                </div>
+
+                <div class="photo-slot" id="photoSlot4" onclick="openPhotoUpload(3)">
+                    <img class="photo-slot-preview" id="photoPreview4">
+                    <div class="photo-slot-placeholder">
+                        <div class="photo-slot-icon">📷</div>
+                        <div class="photo-slot-label">Additional View</div>
+                        <div class="photo-slot-sublabel">Tap to upload photo</div>
+                    </div>
+                    <button class="photo-slot-delete" onclick="deletePhoto(3, event)">×</button>
+                </div>
+            </div>
+            <input type="file" id="photoInput" accept="image/*" style="display: none;"
+                onchange="handlePhotoUpload(event)">
+        </div>
+
+        <div class="detail-section">
+            <div class="section-title">Inspector Signature</div>
+            <canvas id="signaturePad" class="signature-pad"></canvas>
+            <div class="signature-controls">
+                <button class="btn btn-secondary" onclick="clearSignature()">Clear</button>
+            </div>
+        </div>
+
+        <button class="submit-btn" onclick="submitInspection()">Complete Inspection</button>
+    </div>
+
+    <div id="photoModal" class="photo-modal" onclick="closePhotoModal()">
+        <img id="photoModalImg" src="">
+    </div>
+
+    <script>
+        const tasks = [
+            {
+                id: 'APP-2025-001',
+                title: 'Pinewood Commercial Plaza',
+                location: '245 Forest Avenue',
+                applicant: 'Harrison Properties LLC',
+                type: 'New Construction',
+                due: 'Dec 15, 2025',
+                issues: [
+                    'Emergency exit signage requires verification',
+                    'Sprinkler system pressure test pending'
+                ],
+                previousFindings: 'Previous violations on record for similar property owned by applicant.',
+                checklist: [
+                    'Emergency exit signage installed and visible',
+                    'Fire extinguishers properly mounted and accessible',
+                    'Sprinkler system pressure test completed',
+                    'Emergency lighting functional',
+                    'Fire alarm system operational',
+                    'Exit routes clear and unobstructed',
+                    'Fire doors close properly',
+                    'Smoke detectors installed in all required areas'
+                ]
+            },
+            {
+                id: 'APP-2025-005',
+                title: 'Willow Creek Elementary',
+                location: '890 Education Boulevard',
+                applicant: 'Woodland Island School District',
+                type: 'System Upgrade',
+                due: 'Dec 18, 2025',
+                issues: [
+                    'Fire alarm panel replacement plan needs technical review',
+                    'Evacuation route modifications require approval'
+                ],
+                previousFindings: 'School district priority project. State education department compliance required.',
+                checklist: [
+                    'Fire alarm panel replacement completed',
+                    'All alarm pull stations functional',
+                    'Evacuation route signage updated',
+                    'Emergency exits accessible',
+                    'Fire drill procedures posted',
+                    'Sprinkler system operational',
+                    'Assembly point marked clearly',
+                    'Fire safety plan up to date'
+                ]
+            },
+            {
+                id: 'APP-2025-003',
+                title: 'Cedar Lake Restaurant',
+                location: '567 Lakeshore Drive',
+                applicant: 'Miller Hospitality Group',
+                type: 'Complaint Investigation',
+                due: 'Dec 20, 2025',
+                issues: [
+                    'Multiple reports of blocked fire exits',
+                    'Kitchen suppression system overdue for maintenance',
+                    'Expired fire extinguishers reported by staff'
+                ],
+                previousFindings: 'Anonymous complaint received. Business has 30-day compliance deadline.',
+                checklist: [
+                    'Kitchen suppression system functional',
+                    'Fire exits not blocked',
+                    'Fire extinguishers current and charged',
+                    'Exit signs illuminated',
+                    'Electrical panels accessible',
+                    'No flammable materials near heat sources',
+                    'Staff trained in fire procedures',
+                    'Emergency contact information posted'
+                ]
+            }
+        ];
+
+        let currentTaskIndex = 0;
+        let uploadedPhotos = [null, null, null, null];
+        let currentPhotoSlot = 0;
+        let checklistState = {};
+        let canvas, ctx, isDrawing = false;
+
+        function openTask(index) {
+            currentTaskIndex = index;
+            const task = tasks[index];
+
+            document.getElementById('detailTitle').textContent = task.title;
+            document.getElementById('detailSubtitle').textContent = task.location;
+            document.getElementById('detailAppId').textContent = task.id;
+            document.getElementById('detailType').textContent = task.type;
+            document.getElementById('detailApplicant').textContent = task.applicant;
+
+            // Display issues and findings
+            const issuesSection = document.getElementById('issuesSection');
+            if (task.issues && task.issues.length > 0) {
+                issuesSection.innerHTML = `
+                    <div class="issues-section">
+                        <div class="issue-title">⚠️ Previous Issues & Findings</div>
+                        ${task.issues.map(issue => `
+                            <div class="issue-item">
+                                <span>•</span>
+                                <span>${issue}</span>
+                            </div>
+                        `).join('')}
+                        ${task.previousFindings ? `
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #fcd34d; font-size: 12px; color: #78350f;">
+                                <strong>Notes:</strong> ${task.previousFindings}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else {
+                issuesSection.innerHTML = '';
+            }
+
+            const checklistContainer = document.getElementById('checklistContainer');
+            checklistContainer.innerHTML = task.checklist.map((item, idx) => `
+                <div class="checklist-item" onclick="toggleCheckbox(${idx})">
+                    <div class="checkbox" id="checkbox-${idx}"></div>
+                    <div class="checklist-text">${item}</div>
+                </div>
+            `).join('');
+
+            checklistState = {};
+            uploadedPhotos = [null, null, null, null];
+
+            // Reset photo slots
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`photoSlot${i}`).classList.remove('has-image');
+                document.getElementById(`photoPreview${i}`).src = '';
+            }
+
+            document.getElementById('inspectorNotes').value = '';
+
+            document.getElementById('taskListPage').classList.remove('active');
+            document.getElementById('taskDetailPage').classList.add('active');
+
+            initSignaturePad();
+        }
+
+        function backToList() {
+            document.getElementById('taskDetailPage').classList.remove('active');
+            document.getElementById('taskListPage').classList.add('active');
+        }
+
+        function toggleCheckbox(index) {
+            checklistState[index] = !checklistState[index];
+            const checkbox = document.getElementById(`checkbox-${index}`);
+
+            if (checklistState[index]) {
+                checkbox.classList.add('checked');
+            } else {
+                checkbox.classList.remove('checked');
+            }
+        }
+
+        function openPhotoUpload(slotIndex) {
+            currentPhotoSlot = slotIndex;
+            document.getElementById('photoInput').click();
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                uploadedPhotos[currentPhotoSlot] = e.target.result;
+
+                const slotNum = currentPhotoSlot + 1;
+                const slot = document.getElementById(`photoSlot${slotNum}`);
+                const preview = document.getElementById(`photoPreview${slotNum}`);
+
+                preview.src = e.target.result;
+                slot.classList.add('has-image');
+            };
+            reader.readAsDataURL(file);
+
+            // Reset file input
+            event.target.value = '';
+        }
+
+        function deletePhoto(slotIndex, event) {
+            event.stopPropagation();
+
+            uploadedPhotos[slotIndex] = null;
+
+            const slotNum = slotIndex + 1;
+            const slot = document.getElementById(`photoSlot${slotNum}`);
+            const preview = document.getElementById(`photoPreview${slotNum}`);
+
+            preview.src = '';
+            slot.classList.remove('has-image');
+        }
+
+        function openPhotoModal(src) {
+            document.getElementById('photoModalImg').src = src;
+            document.getElementById('photoModal').classList.add('active');
+        }
+
+        function closePhotoModal() {
+            document.getElementById('photoModal').classList.remove('active');
+        }
+
+        function initSignaturePad() {
+            canvas = document.getElementById('signaturePad');
+            ctx = canvas.getContext('2d');
+
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            if (e.type === 'touchstart') {
+                isDrawing = true;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            } else if (e.type === 'touchmove' && isDrawing) {
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }
+        }
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function submitInspection() {
+            const task = tasks[currentTaskIndex];
+            const notes = document.getElementById('inspectorNotes').value;
+            const signatureData = canvas.toDataURL();
+
+            const checkedItems = Object.keys(checklistState).filter(k => checklistState[k]).length;
+            const totalItems = task.checklist.length;
+
+            if (checkedItems < totalItems) {
+                if (!confirm(`Only ${checkedItems} of ${totalItems} checklist items completed. Submit anyway?`)) {
+                    return;
+                }
+            }
+
+            if (!notes.trim()) {
+                if (!confirm('No inspector notes added. Submit anyway?')) {
+                    return;
+                }
+            }
+
+            const inspectionData = {
+                task: task.id,
+                title: task.title,
+                checklist: checklistState,
+                notes: notes,
+                photos: uploadedPhotos.filter(p => p !== null),
+                signature: signatureData,
+                timestamp: new Date().toISOString(),
+                inspector: 'Officer Rebecca Tan'
+            };
+
+            console.log('Inspection submitted:', inspectionData);
+            alert('✅ Inspection completed successfully!');
+            backToList();
+        }
+    </script>
+</body>
+
+</html>
