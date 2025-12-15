@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Woodland Island Fire Safety Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-content h1 {
+            font-size: 28px;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .header-content p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .profile-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #3b82f6;
+            transition: transform 0.2s;
+        }
+
+        .profile-photo:hover {
+            transform: scale(1.05);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #111827;
+        }
+
+        .table-container {
+            grid-column: 1 / -1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f9fafb;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #6b7280;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: background 0.2s;
+        }
+
+        tbody tr.clickable {
+            cursor: pointer;
+        }
+
+        tbody tr.clickable:hover {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-approved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-review {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-investigate {
+            background: #fed7aa;
+            color: #92400e;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .slideout-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 999;
+        }
+
+        .slideout-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .slideout {
+            position: fixed;
+            top: 0;
+            left: -500px;
+            width: 500px;
+            height: 100vh;
+            background: white;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+            transition: left 0.3s ease-out;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .slideout.active {
+            left: 0;
+        }
+
+        .slideout-header {
+            padding: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slideout-header h2 {
+            font-size: 20px;
+            color: #111827;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .slideout-content {
+            padding: 24px;
+        }
+
+        .detail-section {
+            margin-bottom: 24px;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .detail-value {
+            font-size: 14px;
+            color: #111827;
+            margin-bottom: 16px;
+        }
+
+        .issue-list {
+            list-style: none;
+        }
+
+        .issue-item {
+            padding: 12px;
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .notes-box {
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 6px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+        }
+
+        .widgets-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .widget {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .widget:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .widget-title {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .widget-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .widget-total {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .widget-total .widget-value {
+            color: #3b82f6;
+        }
+
+        .widget-progress {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .widget-progress .widget-value {
+            color: #f59e0b;
+        }
+
+        .widget-passed {
+            border-left: 4px solid #10b981;
+        }
+
+        .widget-passed .widget-value {
+            color: #10b981;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 2000;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .modal-content {
+            margin-bottom: 24px;
+        }
+
+        .operation-item {
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 3px solid #e5e7eb;
+        }
+
+        .operation-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #111827;
+        }
+
+        .operation-item p {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .modal-close-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #2563eb;
+        }
+
+        .profile-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+            max-height: 120vh;
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .profile-modal-header {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 40px 32px 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .profile-modal-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid white;
+            margin: 0 auto 16px;
+            display: block;
+        }
+
+        .profile-modal-name {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-modal-role {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+
+        .profile-modal-body {
+            padding: 32px;
+        }
+
+        .profile-section {
+            margin-bottom: 24px;
+        }
+
+        .profile-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .contact-icon {
+            width: 20px;
+            height: 20px;
+            color: #3b82f6;
+        }
+
+        .task-item {
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .task-item-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .task-item-date {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .team-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .edit-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+
+        .edit-btn:hover {
+            background: #2563eb;
+        }
+
+        .save-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 16px;
+            margin-right: 8px;
+            transition: background 0.2s;
+        }
+
+        .save-btn:hover {
+            background: #059669;
+        }
+
+        .cancel-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+
+        .cancel-btn:hover {
+            background: #4b5563;
+        }
+
+        .editable-field {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            margin-bottom: 12px;
+        }
+
+        .editable-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        textarea.editable-field {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .readonly-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #f3f4f6;
+            color: #6b7280;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        .add-report-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .add-report-btn:hover {
+            background: #059669;
+        }
+
+        .report-item {
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 3px solid #10b981;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .report-date {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .report-text {
+            font-size: 14px;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .report-photos {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .report-photo {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid #e5e7eb;
+        }
+
+        .report-photo:hover {
+            border-color: #3b82f6;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background: #f9fafb;
+        }
+
+        .file-upload-area input {
+            display: none;
+        }
+
+        .uploaded-photo-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin: 8px;
+            border: 2px solid #10b981;
+        }
+
+        .reassign-section {
+            margin-top: 16px;
+            padding: 16px;
+            background: #fef3c7;
+            border-radius: 8px;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .reassign-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-top: 8px;
+            background: white;
+        }
+
+        .reassign-btn {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 8px;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .reassign-btn:hover {
+            background: #d97706;
+        }
+
+        .photo-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+
+        .photo-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .task-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f3f4f6;
+            z-index: 4000;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .task-page.active {
+            display: block;
+        }
+
+        .task-page-header {
+            background: white;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .task-page-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .back-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #4b5563;
+        }
+
+        .task-page-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px 24px;
+        }
+
+        .task-card {
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .task-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .task-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+
+        .task-card-due {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .task-status {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .task-status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .task-status-progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .task-card-description {
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .task-card-footer {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .task-action-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .task-action-btn:hover {
+            background: #2563eb;
+        }
+
+        .create-report-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f3f4f6;
+            z-index: 5000;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .create-report-page.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .submit-report-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .submit-report-btn:hover {
+            background: #059669;
+        }
+
+        .floating-create-btn {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: #10b981;
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .floating-create-btn:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="header-content">
+                <h1>🏛️ Woodland Island Fire Safety Dashboard</h1>
+                <p>Regulation Enforcement & Compliance Monitoring</p>
+            </div>
+            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Officer Profile" class="profile-photo"
+                onclick="openProfileModal()">
+        </div>
+
+        <div class="content">
+            <div class="widgets-container">
+                <div class="widget widget-total" onclick="openModal('total')">
+                    <div class="widget-title">Total Operations</div>
+                    <div class="widget-value">188</div>
+                </div>
+
+                <div class="widget widget-progress" onclick="openModal('progress')">
+                    <div class="widget-title">Safety Checks In Progress</div>
+                    <div class="widget-value">43</div>
+                </div>
+
+                <div class="widget widget-passed" onclick="openModal('passed')">
+                    <div class="widget-title">Passed Safety Checks</div>
+                    <div class="widget-value">127</div>
+                </div>
+            </div>
+
+            <div class="card table-container">
+                <h2 class="card-title">Fire Safety Applications</h2>
+                <table id="applicationsTable">
+                    <thead>
+                        <tr>
+                            <th>Application ID</th>
+                            <th>Property Name</th>
+                            <th>Applicant</th>
+                            <th>Type</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Operations Overview</h2>
+                <div class="chart-container">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="card-title">Monthly Activity Trend</h2>
+                <div class="chart-container">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slideout-overlay" id="overlay" onclick="closeSlideout()"></div>
+    <div class="slideout" id="slideout">
+        <div class="slideout-header">
+            <h2 id="slideoutTitle">Application Details</h2>
+            <button class="close-btn" onclick="closeSlideout()">×</button>
+        </div>
+        <div class="slideout-content" id="slideoutContent">
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle"></h2>
+                <p class="modal-subtitle" id="modalSubtitle"></p>
+            </div>
+            <div class="modal-content" id="modalContent"></div>
+            <button class="modal-close-btn" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModalOverlay" onclick="closeProfileModal()">
+        <div class="profile-modal" onclick="event.stopPropagation()">
+            <div class="profile-modal-header">
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Officer Rebecca Moore"
+                    class="profile-modal-photo">
+                <h2 class="profile-modal-name">Officer Rebecca Tan</h2>
+                <p class="profile-modal-role">Senior Fire Safety Inspector</p>
+            </div>
+            <div class="profile-modal-body">
+                <div class="profile-section">
+                    <div class="profile-section-title">Contact Details</div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        rebecca.tan@woodland.gov
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+                            </path>
+                        </svg>
+                        (555) 234-5678
+                    </div>
+                    <div class="contact-item">
+                        <svg class="contact-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                            </path>
+                        </svg>
+                        Office 3B, Fire Safety Division
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <div class="profile-section-title">Team</div>
+                    <span class="team-badge">🔥 Fire Safety Enforcement Unit</span>
+                </div>
+
+                <div class="profile-section">
+                    <div class="profile-section-title">Tasks Assigned (4)</div>
+                    <div class="task-item" onclick="openTasksPage()" style="cursor: pointer;">
+                        <div class="task-item-title">Willow Creek Elementary Review</div>
+                        <div class="task-item-date">Due: Dec 18, 2025</div>
+                    </div>
+                    <div class="task-item" onclick="openTasksPage()" style="cursor: pointer;">
+                        <div class="task-item-title">Quarterly Safety Report</div>
+                        <div class="task-item-date">Due: Dec 20, 2025</div>
+                    </div>
+                    <div class="task-item" onclick="openTasksPage()" style="cursor: pointer;">
+                        <div class="task-item-title">Fire Code Training Session</div>
+                        <div class="task-item-date">Due: Dec 22, 2025</div>
+                    </div>
+                    <div class="task-item" onclick="openTasksPage()" style="cursor: pointer;">
+                        <div class="task-item-title">Harbor District Compliance Audit</div>
+                        <div class="task-item-date">Due: Dec 28, 2025</div>
+                    </div>
+                    <p style="text-align: center; margin-top: 12px; font-size: 13px; color: #3b82f6; cursor: pointer;"
+                        onclick="openTasksPage()">View All Tasks →</p>
+                </div>
+
+                <button class="modal-close-btn" onclick="closeProfileModal()" style="width: 100%;">Close
+                    Profile</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="task-page" id="taskPage">
+        <div class="task-page-header">
+            <h1 class="task-page-title">My Tasks</h1>
+            <button class="back-btn" onclick="closeTasksPage()">← Back to Dashboard</button>
+        </div>
+        <div class="task-page-content">
+            <div class="task-card">
+                <div class="task-card-header">
+                    <div>
+                        <h3 class="task-card-title">Pinewood Commercial Plaza Inspection</h3>
+                        <p class="task-card-due">Due: December 15, 2025</p>
+                    </div>
+                    <span class="task-status task-status-progress">In Progress</span>
+                </div>
+                <p class="task-card-description">
+                    Complete comprehensive fire safety inspection including emergency exit verification and sprinkler
+                    system pressure testing. Previous violations noted for similar properties owned by applicant.
+                </p>
+                <div class="task-card-footer">
+                    <button class="task-action-btn" onclick="openApplicationFromTask('APP-2025-001')">View
+                        Application</button>
+                </div>
+            </div>
+
+            <div class="task-card">
+                <div class="task-card-header">
+                    <div>
+                        <h3 class="task-card-title">Willow Creek Elementary Review</h3>
+                        <p class="task-card-due">Due: December 18, 2025</p>
+                    </div>
+                    <span class="task-status task-status-progress">In Progress</span>
+                </div>
+                <p class="task-card-description">
+                    Technical review of fire alarm panel replacement plan and evacuation route modifications. Coordinate
+                    with state education department for compliance verification.
+                </p>
+                <div class="task-card-footer">
+                    <button class="task-action-btn" onclick="openApplicationFromTask('APP-2025-005')">View
+                        Application</button>
+                </div>
+            </div>
+
+            <div class="task-card">
+                <div class="task-card-header">
+                    <div>
+                        <h3 class="task-card-title">Quarterly Safety Report</h3>
+                        <p class="task-card-due">Due: December 20, 2025</p>
+                    </div>
+                    <span class="task-status task-status-pending">Pending</span>
+                </div>
+                <p class="task-card-description">
+                    Compile and submit quarterly fire safety inspection report including statistics on completed
+                    inspections, violations found, and compliance trends across Woodland Island.
+                </p>
+                <div class="task-card-footer">
+                    <button class="task-action-btn" onclick="openCreateReportPage('quarterly')">Create Report</button>
+                </div>
+            </div>
+
+            <div class="task-card">
+                <div class="task-card-header">
+                    <div>
+                        <h3 class="task-card-title">Fire Code Training Session</h3>
+                        <p class="task-card-due">Due: December 22, 2025</p>
+                    </div>
+                    <span class="task-status task-status-pending">Pending</span>
+                </div>
+                <p class="task-card-description">
+                    Conduct training session for new inspectors on updated fire code regulations and inspection
+                    procedures. Prepare training materials and case studies.
+                </p>
+                <div class="task-card-footer">
+                    <button class="task-action-btn">Mark Complete</button>
+                </div>
+            </div>
+
+            <div class="task-card">
+                <div class="task-card-header">
+                    <div>
+                        <h3 class="task-card-title">Harbor District Compliance Audit</h3>
+                        <p class="task-card-due">Due: December 28, 2025</p>
+                    </div>
+                    <span class="task-status task-status-pending">Pending</span>
+                </div>
+                <p class="task-card-description">
+                    Perform comprehensive compliance audit of all commercial properties in Harbor District. Review
+                    inspection records and identify properties requiring follow-up.
+                </p>
+                <div class="task-card-footer">
+                    <button class="task-action-btn">Start Audit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="create-report-page" id="createReportPage">
+        <div class="task-page-header">
+            <h1 class="task-page-title">Create New Report</h1>
+            <button class="back-btn" onclick="closeCreateReportPage()">← Back</button>
+        </div>
+        <div class="task-page-content">
+            <div class="card">
+                <form onsubmit="submitNewReport(event)">
+                    <div class="form-group">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" id="reportType" required>
+                            <option value="">Select report type</option>
+                            <option value="inspection">Inspection Report</option>
+                            <option value="investigation">Investigation Report</option>
+                            <option value="quarterly">Quarterly Summary</option>
+                            <option value="incident">Incident Report</option>
+                            <option value="compliance">Compliance Audit</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Related Application (Optional)</label>
+                        <select class="form-select" id="relatedApp">
+                            <option value="">None</option>
+                            <option value="APP-2025-001">APP-2025-001 - Pinewood Commercial Plaza</option>
+                            <option value="APP-2025-002">APP-2025-002 - Oakridge Apartment Complex</option>
+                            <option value="APP-2025-003">APP-2025-003 - Cedar Lake Restaurant</option>
+                            <option value="APP-2025-004">APP-2025-004 - Birch Street Warehouse</option>
+                            <option value="APP-2025-005">APP-2025-005 - Willow Creek Elementary</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Report Title</label>
+                        <input type="text" class="form-input" id="reportTitle" placeholder="Enter report title"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Location/Property Name</label>
+                        <input type="text" class="form-input" id="reportLocation"
+                            placeholder="Enter location or property name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Report Details</label>
+                        <textarea class="form-input form-textarea" id="reportDetails"
+                            placeholder="Enter detailed report information..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Findings/Issues</label>
+                        <textarea class="form-input form-textarea" id="reportFindings"
+                            placeholder="List any findings, issues, or violations..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Upload Photos</label>
+                        <div class="file-upload-area" onclick="document.getElementById('newReportPhotoUpload').click()">
+                            <input type="file" id="newReportPhotoUpload" accept="image/*" multiple
+                                onchange="handleNewReportPhotoUpload(event)">
+                            <p style="color: #6b7280; font-size: 14px;">📷 Click to upload photos</p>
+                            <p style="color: #9ca3af; font-size: 12px; margin-top: 4px;">PNG, JPG up to 10MB</p>
+                        </div>
+                        <div id="newReportPhotoPreview" style="display: flex; flex-wrap: wrap; margin-top: 8px;"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button type="submit" class="submit-report-btn">Submit Report</button>
+                        <button type="button" class="back-btn" onclick="closeCreateReportPage()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <button class="floating-create-btn" onclick="openCreateReportPage()" title="Create New Report">+</button>
+
+    <script>
+        const availableOfficers = [
+            'Officer Rebecca Moore',
+            'Officer James Chen',
+            'Officer Michael Torres',
+            'Officer Sarah Williams',
+            'Officer David Park',
+            'Officer Lisa Anderson'
+        ];
+
+        window.uploadedPhotos = [];
+
+        const applications = [
+            {
+                id: 'APP-2025-001',
+                propertyName: 'Pinewood Commercial Plaza',
+                applicant: 'Harrison Properties LLC',
+                submittedDate: '2025-12-01',
+                status: 'review',
+                type: 'New Construction',
+                details: {
+                    address: '245 Forest Avenue, Woodland Island',
+                    inspector: 'Officer Rebecca Moore',
+                    issues: ['Emergency exit signage requires verification', 'Sprinkler system pressure test pending'],
+                    notes: 'Site inspection scheduled for Dec 15. Previous violations on record for similar property.'
+                }
+            },
+            {
+                id: 'APP-2025-002',
+                propertyName: 'Oakridge Apartment Complex',
+                applicant: 'Greenfield Developers',
+                submittedDate: '2025-12-05',
+                status: 'approved',
+                type: 'Annual Inspection',
+                details: {
+                    address: '89 Maple Street, Woodland Island',
+                    inspector: 'Officer James Chen',
+                    issues: [],
+                    notes: 'All fire safety systems passed inspection.'
+                }
+            },
+            {
+                id: 'APP-2025-003',
+                propertyName: 'Cedar Lake Restaurant',
+                applicant: 'Miller Hospitality Group',
+                submittedDate: '2025-11-28',
+                status: 'investigate',
+                type: 'Complaint Investigation',
+                details: {
+                    address: '567 Lakeshore Drive, Woodland Island',
+                    inspector: 'Officer Michael Torres',
+                    issues: ['Multiple reports of blocked fire exits', 'Kitchen suppression system overdue for maintenance', 'Expired fire extinguishers reported by staff'],
+                    notes: 'Anonymous complaint received. Immediate investigation required. Business has 30-day compliance deadline.'
+                }
+            },
+            {
+                id: 'APP-2025-004',
+                propertyName: 'Birch Street Warehouse',
+                applicant: 'Island Storage Solutions',
+                submittedDate: '2025-12-08',
+                status: 'rejected',
+                type: 'Renovation Permit',
+                details: {
+                    address: '123 Industrial Park Road, Woodland Island',
+                    inspector: 'Officer Sarah Williams',
+                    issues: [],
+                    notes: 'Plans do not meet minimum fire separation requirements.'
+                }
+            },
+            {
+                id: 'APP-2025-005',
+                propertyName: 'Willow Creek Elementary',
+                applicant: 'Woodland Island School District',
+                submittedDate: '2025-12-10',
+                status: 'review',
+                type: 'System Upgrade',
+                details: {
+                    address: '890 Education Boulevard, Woodland Island',
+                    inspector: 'Officer Rebecca Moore',
+                    issues: ['Fire alarm panel replacement plan needs technical review', 'Evacuation route modifications require approval'],
+                    notes: 'School district priority project. Coordinating with state education department for compliance verification.'
+                }
+            }
+        ];
+
+        function getStatusClass(status) {
+            return 'status-' + status;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            applications.forEach(app => {
+                const row = document.createElement('tr');
+                const isClickable = app.status === 'review' || app.status === 'investigate';
+
+                if (isClickable) {
+                    row.className = 'clickable';
+                    row.onclick = () => openSlideout(app);
+                }
+
+                row.innerHTML = `
+                    <td><strong>${app.id}</strong></td>
+                    <td>${app.propertyName}</td>
+                    <td>${app.applicant}</td>
+                    <td>${app.type}</td>
+                    <td>${app.submittedDate}</td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(app.status)}">
+                            ${app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                        </span>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        function openSlideout(app) {
+            const slideout = document.getElementById('slideout');
+            const overlay = document.getElementById('overlay');
+            const content = document.getElementById('slideoutContent');
+
+            const isEditable = app.status === 'review' || app.status === 'investigate';
+
+            let reportsHTML = '';
+            if (app.details.reports && app.details.reports.length > 0) {
+                reportsHTML = '<div>' + app.details.reports.map(report => {
+                    let photosHTML = '';
+                    if (report.photos && report.photos.length > 0) {
+                        photosHTML = '<div class="report-photos">' +
+                            report.photos.map(photo => `<img src="${photo}" class="report-photo" onclick="viewPhoto('${photo}')">`).join('') +
+                            '</div>';
+                    }
+                    return `
+                        <div class="report-item">
+                            <div class="report-header">
+                                <div class="report-date">📋 ${report.date}</div>
+                            </div>
+                            <div class="report-text">${report.text}</div>
+                            ${photosHTML}
+                        </div>
+                    `;
+                }).join('') + '</div>';
+            } else {
+                reportsHTML = '<p style="color: #6b7280; font-size: 14px;">No reports added yet</p>';
+            }
+
+            let issuesHTML = '';
+            if (app.details.issues.length > 0) {
+                if (isEditable) {
+                    issuesHTML = '<div id="issuesContainer">' +
+                        app.details.issues.map((issue, idx) => `
+                            <div class="issue-item" id="issue-${idx}">⚠️ ${issue}</div>
+                        `).join('') +
+                        '</div>';
+                } else {
+                    issuesHTML = '<ul class="issue-list">' +
+                        app.details.issues.map(issue => `<li class="issue-item">⚠️ ${issue}</li>`).join('') +
+                        '</ul>';
+                }
+            } else {
+                issuesHTML = '<p style="color: #6b7280; font-size: 14px;">No issues reported</p>';
+            }
+
+            let editButtonsHTML = '';
+            if (isEditable) {
+                const reassignHTML = `
+                    <div class="reassign-section">
+                        <div class="detail-label">Reassign Application</div>
+                        <select class="reassign-select" id="reassignSelect">
+                            ${availableOfficers.map(officer =>
+                    `<option value="${officer}" ${officer === app.details.inspector ? 'selected' : ''}>${officer}</option>`
+                ).join('')}
+                        </select>
+                        <button class="reassign-btn" onclick="reassignApplication('${app.id}')">Reassign to Selected Officer</button>
+                    </div>
+                `;
+
+                editButtonsHTML = `
+                    ${reassignHTML}
+                    <button class="edit-btn" onclick="toggleEditMode('${app.id}')">Edit Application</button>
+                    <button class="add-report-btn" onclick="showAddReportForm('${app.id}')">+ Add Report</button>
+                    <div id="editControls" style="display: none;">
+                        <button class="save-btn" onclick="saveChanges('${app.id}')">Save Changes</button>
+                        <button class="cancel-btn" onclick="cancelEdit('${app.id}')">Cancel</button>
+                    </div>
+                `;
+            } else {
+                editButtonsHTML = `<span class="readonly-badge">📋 Read-only - ${app.status === 'approved' ? 'Approved' : 'Rejected'}</span>`;
+            }
+
+            content.innerHTML = `
+                <div class="detail-section">
+                    <div class="detail-label">Application ID</div>
+                    <div class="detail-value"><strong>${app.id}</strong></div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Property Name</div>
+                    <div class="detail-value" id="propertyName">${app.propertyName}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Address</div>
+                    <div class="detail-value" id="address">${app.details.address}</div>
+                    <div style="margin-top: 12px; height: 250px; background: #f3f4f6; border-radius: 8px; overflow: hidden;">
+                        <iframe 
+                            width="100%" 
+                            height="100%" 
+                            frameborder="0" 
+                            style="border:0"
+                            src="https://www.openstreetmap.org/export/embed.html?bbox=-122.44%2C37.76%2C-122.42%2C37.78&layer=mapnik&marker=37.77%2C-122.43"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Applicant</div>
+                    <div class="detail-value" id="applicant">${app.applicant}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Application Type</div>
+                    <div class="detail-value">${app.type}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Assigned Inspector</div>
+                    <div class="detail-value" id="inspector">${app.details.inspector}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">
+                        <span class="status-badge ${getStatusClass(app.status)}">
+                            ${app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Issues & Findings</div>
+                    ${issuesHTML}
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Inspector Notes</div>
+                    <div class="notes-box" id="notes">${app.details.notes}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <div class="detail-label">Inspection Reports</div>
+                    <div id="reportsContainer">${reportsHTML}</div>
+                </div>
+                
+                ${editButtonsHTML}
+            `;
+
+            // Store current app data
+            window.currentApp = JSON.parse(JSON.stringify(app));
+
+            overlay.classList.add('active');
+            slideout.classList.add('active');
+        }
+
+        function closeSlideout() {
+            const slideout = document.getElementById('slideout');
+            const overlay = document.getElementById('overlay');
+
+            overlay.classList.remove('active');
+            slideout.classList.remove('active');
+        }
+
+        function openModal(type) {
+            const modal = document.getElementById('modalOverlay');
+            const title = document.getElementById('modalTitle');
+            const subtitle = document.getElementById('modalSubtitle');
+            const content = document.getElementById('modalContent');
+
+            let modalData = {
+                total: {
+                    title: 'Total Operations Overview',
+                    subtitle: '188 total fire safety operations',
+                    items: [
+                        { name: 'Oakridge Apartment Complex', desc: 'Annual inspection completed - All systems operational' },
+                        { name: 'Cedar Lake Restaurant', desc: 'Investigation ongoing - Multiple fire code violations' },
+                        { name: 'Pinewood Commercial Plaza', desc: 'Under review - New construction permit evaluation' },
+                        { name: 'Willow Creek Elementary', desc: 'Under review - Fire alarm system upgrade' },
+                        { name: 'Birch Street Warehouse', desc: 'Renovation permit rejected - Non-compliant plans' }
+                    ]
+                },
+                progress: {
+                    title: 'Safety Checks In Progress',
+                    subtitle: '43 active safety inspections and reviews',
+                    items: [
+                        { name: 'Pinewood Commercial Plaza', desc: 'Awaiting sprinkler system pressure test results' },
+                        { name: 'Willow Creek Elementary', desc: 'Fire alarm panel replacement under technical review' },
+                        { name: 'Maple Street Office Building', desc: 'Emergency lighting system inspection scheduled' },
+                        { name: 'Harbor View Hotel', desc: 'Annual fire drill and evacuation plan review' },
+                        { name: 'Downtown Shopping Center', desc: 'Fire suppression system maintenance verification' }
+                    ]
+                },
+                passed: {
+                    title: 'Passed Safety Checks',
+                    subtitle: '127 successfully completed inspections',
+                    items: [
+                        { name: 'Oakridge Apartment Complex', desc: 'All fire safety systems passed - Certificate issued' },
+                        { name: 'Greenwood Medical Center', desc: 'Full compliance - Emergency systems operational' },
+                        { name: 'Riverside Restaurant', desc: 'Kitchen suppression system approved' },
+                        { name: 'Tech Park Building A', desc: 'Sprinkler system and alarms certified' },
+                        { name: 'Main Street Theater', desc: 'Exit signage and emergency lighting approved' }
+                    ]
+                }
+            };
+
+            const data = modalData[type];
+            title.textContent = data.title;
+            subtitle.textContent = data.subtitle;
+
+            content.innerHTML = data.items.map(item => `
+                <div class="operation-item">
+                    <h4>${item.name}</h4>
+                    <p>${item.desc}</p>
+                </div>
+            `).join('');
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modalOverlay');
+            modal.classList.remove('active');
+        }
+
+        function openProfileModal() {
+            const modal = document.getElementById('profileModalOverlay');
+            modal.classList.add('active');
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModalOverlay');
+            modal.classList.remove('active');
+        }
+
+        function toggleEditMode(appId) {
+            const app = window.currentApp;
+
+            // Replace property name with input
+            const propertyNameEl = document.getElementById('propertyName');
+            propertyNameEl.innerHTML = `<input type="text" class="editable-field" id="editPropertyName" value="${app.propertyName}">`;
+
+            // Replace address with input
+            const addressEl = document.getElementById('address');
+            addressEl.innerHTML = `<input type="text" class="editable-field" id="editAddress" value="${app.details.address}">`;
+
+            // Replace applicant with input
+            const applicantEl = document.getElementById('applicant');
+            applicantEl.innerHTML = `<input type="text" class="editable-field" id="editApplicant" value="${app.applicant}">`;
+
+            // Replace inspector with input
+            const inspectorEl = document.getElementById('inspector');
+            inspectorEl.innerHTML = `<input type="text" class="editable-field" id="editInspector" value="${app.details.inspector}">`;
+
+            // Replace issues with editable list
+            const issuesContainer = document.getElementById('issuesContainer');
+            if (issuesContainer) {
+                issuesContainer.innerHTML = app.details.issues.map((issue, idx) =>
+                    `<input type="text" class="editable-field" id="editIssue-${idx}" value="${issue}">`
+                ).join('');
+            }
+
+            // Replace notes with textarea
+            const notesEl = document.getElementById('notes');
+            notesEl.innerHTML = `<textarea class="editable-field" id="editNotes">${app.details.notes}</textarea>`;
+
+            // Show save/cancel buttons, hide edit button
+            document.querySelector('.edit-btn').style.display = 'none';
+            document.getElementById('editControls').style.display = 'block';
+        }
+
+        function saveChanges(appId) {
+            // Get edited values
+            const propertyName = document.getElementById('editPropertyName').value;
+            const address = document.getElementById('editAddress').value;
+            const applicant = document.getElementById('editApplicant').value;
+            const inspector = document.getElementById('editInspector').value;
+            const notes = document.getElementById('editNotes').value;
+
+            // Get edited issues
+            const issues = [];
+            let idx = 0;
+            while (document.getElementById(`editIssue-${idx}`)) {
+                issues.push(document.getElementById(`editIssue-${idx}`).value);
+                idx++;
+            }
+
+            // Update the application in the array
+            const appIndex = applications.findIndex(a => a.id === appId);
+            if (appIndex !== -1) {
+                applications[appIndex].propertyName = propertyName;
+                applications[appIndex].applicant = applicant;
+                applications[appIndex].details.address = address;
+                applications[appIndex].details.inspector = inspector;
+                applications[appIndex].details.issues = issues;
+                applications[appIndex].details.notes = notes;
+
+                // Update current app
+                window.currentApp = applications[appIndex];
+            }
+
+            // Close and reopen slideout to show updated values
+            closeSlideout();
+            setTimeout(() => {
+                openSlideout(applications[appIndex]);
+            }, 300);
+
+            // Optionally show a success message
+            alert('Changes saved successfully!');
+        }
+
+        function cancelEdit(appId) {
+            // Reopen slideout with original data
+            const app = applications.find(a => a.id === appId);
+            closeSlideout();
+            setTimeout(() => {
+                openSlideout(app);
+            }, 300);
+        }
+
+        function showAddReportForm(appId) {
+            const reportsContainer = document.getElementById('reportsContainer');
+
+            reportsContainer.innerHTML = `
+                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; border-left: 3px solid #10b981; margin-bottom: 16px;">
+                    <h4 style="margin-bottom: 12px; font-size: 14px; font-weight: 600;">Add New Report</h4>
+                    <textarea id="newReportText" class="editable-field" placeholder="Enter report details..."></textarea>
+                    
+                    <div class="file-upload-area" onclick="document.getElementById('photoUpload').click()">
+                        <input type="file" id="photoUpload" accept="image/*" multiple onchange="handlePhotoUpload(event)">
+                        <p style="color: #6b7280; font-size: 14px;">📷 Click to upload photos</p>
+                        <p style="color: #9ca3af; font-size: 12px; margin-top: 4px;">PNG, JPG up to 10MB</p>
+                    </div>
+                    
+                    <div id="photoPreviewContainer" style="display: flex; flex-wrap: wrap; margin-top: 8px;"></div>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 12px;">
+                        <button class="save-btn" onclick="submitReport('${appId}')" style="margin: 0;">Submit Report</button>
+                        <button class="cancel-btn" onclick="cancelAddReport('${appId}')" style="margin: 0;">Cancel</button>
+                    </div>
+                </div>
+                ${reportsContainer.innerHTML}
+            `;
+        }
+
+        function handlePhotoUpload(event) {
+            const files = event.target.files;
+            const previewContainer = document.getElementById('photoPreviewContainer');
+            window.uploadedPhotos = [];
+
+            previewContainer.innerHTML = '';
+
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'uploaded-photo-preview';
+                    previewContainer.appendChild(img);
+                    window.uploadedPhotos.push(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function submitReport(appId) {
+            const reportText = document.getElementById('newReportText').value;
+
+            if (!reportText.trim()) {
+                alert('Please enter report details');
+                return;
+            }
+
+            const appIndex = applications.findIndex(a => a.id === appId);
+            if (appIndex !== -1) {
+                const newReport = {
+                    date: new Date().toISOString().split('T')[0],
+                    text: reportText,
+                    photos: window.uploadedPhotos || []
+                };
+
+                applications[appIndex].details.reports.push(newReport);
+                window.currentApp = applications[appIndex];
+                window.uploadedPhotos = [];
+
+                closeSlideout();
+                setTimeout(() => {
+                    openSlideout(applications[appIndex]);
+                    alert('Report added successfully!');
+                }, 300);
+            }
+        }
+
+        function openTasksPage() {
+            closeProfileModal();
+            document.getElementById('taskPage').classList.add('active');
+        }
+
+        function closeTasksPage() {
+            document.getElementById('taskPage').classList.remove('active');
+        }
+
+        function openApplicationFromTask(appId) {
+            closeTasksPage();
+            const app = applications.find(a => a.id === appId);
+            if (app) {
+                openSlideout(app);
+            }
+        }
+
+        function openCreateReportPage(type) {
+            closeTasksPage();
+            document.getElementById('createReportPage').classList.add('active');
+
+            if (type) {
+                document.getElementById('reportType').value = type;
+            }
+        }
+
+        function closeCreateReportPage() {
+            document.getElementById('createReportPage').classList.remove('active');
+            document.getElementById('reportType').value = '';
+            document.getElementById('relatedApp').value = '';
+            document.getElementById('reportTitle').value = '';
+            document.getElementById('reportLocation').value = '';
+            document.getElementById('reportDetails').value = '';
+            document.getElementById('reportFindings').value = '';
+            document.getElementById('newReportPhotoPreview').innerHTML = '';
+            window.newReportPhotos = [];
+        }
+
+        function handleNewReportPhotoUpload(event) {
+            const files = event.target.files;
+            const previewContainer = document.getElementById('newReportPhotoPreview');
+            window.newReportPhotos = [];
+
+            previewContainer.innerHTML = '';
+
+            for (let file of files) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'uploaded-photo-preview';
+                    previewContainer.appendChild(img);
+                    window.newReportPhotos.push(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function submitNewReport(event) {
+            event.preventDefault();
+
+            const reportData = {
+                type: document.getElementById('reportType').value,
+                relatedApp: document.getElementById('relatedApp').value,
+                title: document.getElementById('reportTitle').value,
+                location: document.getElementById('reportLocation').value,
+                details: document.getElementById('reportDetails').value,
+                findings: document.getElementById('reportFindings').value,
+                photos: window.newReportPhotos || [],
+                date: new Date().toISOString().split('T')[0],
+                officer: 'Officer Rebecca Moore'
+            };
+
+            console.log('Report submitted:', reportData);
+            alert('Report submitted successfully!');
+            closeCreateReportPage();
+        }
+
+        function cancelAddReport(appId) {
+            window.uploadedPhotos = [];
+            const app = applications.find(a => a.id === appId);
+            closeSlideout();
+            setTimeout(() => {
+                openSlideout(app);
+            }, 300);
+        }
+
+        function viewPhoto(photoUrl) {
+            const photoModal = document.createElement('div');
+            photoModal.className = 'photo-modal';
+            photoModal.onclick = function () {
+                document.body.removeChild(photoModal);
+            };
+
+            const img = document.createElement('img');
+            img.src = photoUrl;
+            photoModal.appendChild(img);
+
+            document.body.appendChild(photoModal);
+        }
+
+        function reassignApplication(appId) {
+            const newInspector = document.getElementById('reassignSelect').value;
+            const appIndex = applications.findIndex(a => a.id === appId);
+
+            if (appIndex !== -1) {
+                applications[appIndex].details.inspector = newInspector;
+                window.currentApp = applications[appIndex];
+
+                closeSlideout();
+                setTimeout(() => {
+                    openSlideout(applications[appIndex]);
+                    alert(`Application reassigned to ${newInspector}`);
+                }, 300);
+            }
+        }
+
+        // Initialize Pie Chart
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Completed', 'Ongoing', 'Investigations'],
+                datasets: [{
+                    data: [127, 43, 18],
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 13
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Initialize Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [
+                    {
+                        label: 'Completed',
+                        data: [45, 52, 48, 61, 55, 38],
+                        backgroundColor: '#10b981'
+                    },
+                    {
+                        label: 'Ongoing',
+                        data: [12, 15, 18, 14, 16, 21],
+                        backgroundColor: '#3b82f6'
+                    },
+                    {
+                        label: 'Investigations',
+                        data: [5, 7, 6, 8, 9, 11],
+                        backgroundColor: '#f59e0b'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: false,
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        stacked: false,
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Render table on load
+        renderTable();
+    </script>
+</body>
+
+</html>
